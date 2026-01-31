@@ -1,0 +1,103 @@
+[
+  {
+    "property_url":"https:\/\/www.realtor.com\/realestateandhomes-detail\/85-230-Mahinaau-Rd_Waianae_HI_96792_M95202-15924",
+    "property_id":"9520215924",
+    "listing_id":"2986561441",
+    "permalink":"85-230-Mahinaau-Rd_Waianae_HI_96792_M95202-15924",
+    "mls":"HOHI",
+    "mls_id":"202519319",
+    "status":"FOR_SALE",
+    "mls_status":"Active",
+    "text":"Unique opportunity to create your oasis on acreage close to the beach! This expansive parcel has mature Kiawe trees, and is a blank canvas waiting for your creative touch. Captivating views of the surrounding Waianae mountain range. Flat and useable, with lots of room for your imagination to run wild, including farming, a private residence, agricultural pursuits, or other personal projects. The property is situated on a street of nicer homes, in a tranquil area, away from the hustle and bustle of Honolulu. Some of the most beautiful and uncrowded beaches are just down the road, and lots of amazing hiking trails and adventure await. Don't miss this opportunity to make this home!",
+    "style":"LAND",
+    "formatted_address":"85-230 Mahinaau Rd, Waianae, HI, 96792",
+    "full_street_line":"85-230 Mahinaau Rd",
+    "street":"85-230 Mahinaau Rd",
+    "unit":null,
+    "city":"Waianae",
+    "state":"az",
+    "zip_code":"96792",
+    "beds":null,
+    "full_baths":null,
+    "half_baths":null,
+    "sqft":null,
+    "year_built":null,
+    "days_on_mls":129,
+    "list_price":550000,
+    "list_price_min":null,
+    "list_price_max":null,
+    "list_date":"2025-09-19 18:25:36",
+    "pending_date":null,
+    "sold_price":null,
+    "last_sold_date":null,
+    "last_sold_price":null,
+    "last_status_change_date":"2025-09-19 18:25:36",
+    "last_update_date":1762820525000,
+    "assessed_value":null,
+    "estimated_value":544000,
+    "tax":null,
+    "tax_history":null,
+    "new_construction":false,
+    "lot_sqft":null,
+    "price_per_sqft":null,
+    "latitude":null,
+    "longitude":null,
+    "neighborhoods":null,
+    "county":"Honolulu",
+    "fips_code":null,
+    "stories":null,
+    "hoa_fee":null,
+    "parking_garage":null,
+    "agent_id":"334680",
+    "agent_name":"Leon Mosher",
+    "agent_email":"leon@kailuarealestate.com",
+    "agent_phones":[
+      {
+        "ext":"",
+        "primary":true,
+        "type":"Office",
+        "number":"8082623104"
+      },
+      {
+        "ext":"",
+        "primary":true,
+        "type":"Mobile",
+        "number":"8082204612"
+      },
+      {
+        "ext":"",
+        "primary":false,
+        "type":"Fax",
+        "number":"8082622861"
+      }
+    ],
+    "agent_mls_set":"A-HOHI-28512",
+    "agent_nrds_id":"315528512",
+    "broker_id":"711170",
+    "broker_name":"Coldwell Banker",
+    "builder_id":null,
+    "builder_name":null,
+    "office_id":"9205",
+    "office_mls_set":"O-HOHI-CBPP04",
+    "office_name":"Coldwell Banker Realty",
+    "office_email":"erenl@cbpacific.com",
+    "office_phones":[
+      {
+        "number":"8082623104",
+        "type":"Office",
+        "primary":true,
+        "ext":""
+      },
+      {
+        "number":"8082622861",
+        "type":"Fax",
+        "primary":false,
+        "ext":""
+      }
+    ],
+    "nearby_schools":null,
+    "primary_photo":"https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b2196476098od-w480_h360_x2.webp?w=1080&q=75",
+    "alt_photos":"https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b2196476098od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b174099673od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b675859674od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b252573558od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b3736352526od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b1653419719od-w480_h360_x2.webp?w=1080&q=75, https:\/\/ap.rdcpix.com\/b63ec75ea51202f6a651a788243d65b2l-b441188816od-w480_h360_x2.webp?w=1080&q=75",
+    "search_zip":"85230"
+  }
+]
