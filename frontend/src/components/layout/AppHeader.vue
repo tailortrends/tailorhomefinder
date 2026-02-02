@@ -23,7 +23,7 @@
           <router-link :to="{ name: 'login' }" class="nav-link">
             Sign In
           </router-link>
-          <router-link :to="{ name: 'signup' }" class="btn btn-primary">
+          <router-link :to="{ name: 'signup' }" class="btn btn-primary hover:scale-105 transition-transform">
             Sign Up
           </router-link>
         </template>
@@ -51,12 +51,13 @@ const handleLogout = async () => {
 
 <style scoped>
 .app-header {
-  background: white;
-  border-bottom: 1px solid var(--color-border);
+  background: rgba(12, 12, 12, 0.95);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(212, 175, 55, 0.2);
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: var(--shadow-sm);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 .header-content {
@@ -68,7 +69,7 @@ const handleLogout = async () => {
 
 .logo {
   text-decoration: none;
-  color: var(--color-primary);
+  color: var(--color-gold-400);
 }
 
 .logo h1 {
@@ -84,13 +85,13 @@ const handleLogout = async () => {
 
 .nav-link {
   text-decoration: none;
-  color: var(--color-text);
+  color: rgba(255, 255, 255, 0.9);
   font-weight: 500;
   transition: color 0.2s;
 }
 
 .nav-link:hover {
-  color: var(--color-primary);
+  color: var(--color-gold-400);
 }
 
 .btn-link {

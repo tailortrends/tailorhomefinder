@@ -1,5 +1,5 @@
 <template>
-  <div class="home">
+  <div class="home" :class="{ 'has-comparison': comparisonStore.comparisonList.length > 0 }">
     <!-- Hero Section -->
     <section class="hero">
       <div class="hero-background" />
@@ -77,19 +77,28 @@
         <p>Try adjusting your search or check back later for new listings.</p>
       </div>
     </section>
+
+        <!-- Add before closing </div> -->
+    <ComparisonBar @open-comparison="comparisonModalOpen = true" />
+    <ComparisonModal :is-open="comparisonModalOpen" @close="comparisonModalOpen = false" />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { usePropertiesStore } from '@/stores/properties';
-import PropertyCard from '@/components/property/PropertyCard.vue';
-import type { Property } from '@/types/property';
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { usePropertiesStore } from '@/stores/properties'
+import PropertyCard from '@/components/property/PropertyCard.vue'
+import ComparisonBar from '@/components/comparison/ComparisonBar.vue'
+import ComparisonModal from '@/components/comparison/ComparisonModal.vue'
+import { useComparisonStore } from '@/stores/comparison'
 
 const router = useRouter();
 const propertiesStore = usePropertiesStore();
 const searchQuery = ref('');
+
+const comparisonModalOpen = ref(false)
+const comparisonStore = useComparisonStore()
 
 const handleSearch = () => {
   if (searchQuery.value.trim()) {
@@ -307,5 +316,14 @@ onMounted(() => {
     grid-template-columns: 1fr;
     gap: 1.5rem;
   }
+  .home-page {
+    padding-bottom: 0;
+    transition: padding-bottom 0.3s ease;
+  }
+
+  .home-page.has-comparison {
+    padding-bottom: 120px;
+  }
 }
+
 </style>

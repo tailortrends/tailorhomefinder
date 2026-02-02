@@ -4,12 +4,22 @@
     @click="$emit('select', property)"
   >
     <!-- Image -->
-    <div class="property-image">
+    <div class="property-image" @click.stop="openLightbox">
       <img 
         :src="property.image" 
         :alt="property.title"
       />
       <div class="image-overlay" />
+      
+      <!-- Zoom icon indicator -->
+      <div class="zoom-indicator">
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/>
+          <path d="m21 21-4.3-4.3"/>
+          <line x1="11" y1="8" x2="11" y2="14"/>
+          <line x1="8" y1="11" x2="14" y2="11"/>
+        </svg>
+      </div>
       
       <!-- Status Badge -->
       <div class="badges">
@@ -43,7 +53,21 @@
           <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </svg>
       </button>
+      <!-- Compare Button -->
+      <button 
+        class="compare-btn"
+        :class="{ active: isInComparison }"
+        @click.stop="toggleComparison"
+        :title="isInComparison ? 'Remove from comparison' : 'Add to comparison'"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 21h-6a4 4 0 0 1-4-4V5"/>
+          <path d="M6 9h12a4 4 0 0 1 4 4v8"/>
+          <path d="m6 9 3-3-3-3"/>
+        </svg>
+      </button>
     </div>
+    
 
     <!-- Content -->
     <div class="property-content">
@@ -106,58 +130,92 @@
         </span>
       </div>
     </div>
+
+    <!-- Lightbox component -->
+    <ImageLightbox 
+      :images="allImages"
+      :is-open="lightboxOpen"
+      @close="lightboxOpen = false"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import type { Property } from '@/types/property';
-import { formatPrice, formatSqft } from '@/utils/propertyHelpers';
+import { ref, computed, onMounted } from 'vue'
+import type { Property } from '@/types/property'
+import { formatPrice, formatSqft } from '@/utils/propertyHelpers'
+import ImageLightbox from '@/components/common/ImageLightbox.vue'
+import { useComparisonStore } from '@/stores/comparison'
 
 interface Props {
-  property: Property;
+  property: Property
 }
 
-const props = defineProps<Props>();
+const props = defineProps<Props>()
 
 defineEmits<{
-  select: [property: Property];
-}>();
+  select: [property: Property]
+}>()
 
-const isFavorite = ref(false);
+const comparisonStore = useComparisonStore()
+const isFavorite = ref(false)
+const lightboxOpen = ref(false)
+
+const allImages = computed(() => {
+  const images = [props.property.image]
+  if (props.property.altPhotos && props.property.altPhotos.length > 0) {
+    images.push(...props.property.altPhotos)
+  }
+  return images
+})
+
+const isInComparison = computed(() => {
+  return comparisonStore.isInComparison(props.property.id)
+})
+
+const openLightbox = () => {
+  lightboxOpen.value = true
+}
+
+const toggleComparison = () => {
+  const added = comparisonStore.toggleComparison(props.property)
+  if (!added && !isInComparison.value) {
+    alert('You can only compare up to 3 properties at once.')
+  }
+}
 
 const toggleFavorite = () => {
-  isFavorite.value = !isFavorite.value;
+  isFavorite.value = !isFavorite.value
   
   try {
-    const saved = localStorage.getItem('tailor_favorites');
-    let favorites: string[] = saved ? JSON.parse(saved) : [];
+    const saved = localStorage.getItem('tailor_favorites')
+    let favorites: string[] = saved ? JSON.parse(saved) : []
     
-    if (!Array.isArray(favorites)) favorites = [];
+    if (!Array.isArray(favorites)) favorites = []
 
     if (isFavorite.value) {
       if (!favorites.includes(props.property.id)) {
-        favorites.push(props.property.id);
+        favorites.push(props.property.id)
       }
     } else {
-      favorites = favorites.filter(id => id !== props.property.id);
+      favorites = favorites.filter(id => id !== props.property.id)
     }
     
-    localStorage.setItem('tailor_favorites', JSON.stringify(favorites));
+    localStorage.setItem('tailor_favorites', JSON.stringify(favorites))
   } catch (e) {
-    console.error('Error saving favorite:', e);
+    console.error('Error saving favorite:', e)
   }
-};
+}
 
 onMounted(() => {
   try {
-    const saved = localStorage.getItem('tailor_favorites');
-    const favorites = saved ? JSON.parse(saved) : [];
-    isFavorite.value = Array.isArray(favorites) && favorites.includes(props.property.id);
+    const saved = localStorage.getItem('tailor_favorites')
+    const favorites = saved ? JSON.parse(saved) : []
+    isFavorite.value = Array.isArray(favorites) && favorites.includes(props.property.id)
   } catch (e) {
-    console.error('Error loading favorites:', e);
+    console.error('Error loading favorites:', e)
   }
-});
+})
 </script>
 
 <style scoped>
@@ -180,6 +238,7 @@ onMounted(() => {
   position: relative;
   aspect-ratio: 4 / 3;
   overflow: hidden;
+  cursor: pointer;
 }
 
 .property-image img {
@@ -198,6 +257,32 @@ onMounted(() => {
   inset: 0;
   background: linear-gradient(to top, rgba(0, 0, 0, 0.6), transparent);
   opacity: 0.6;
+}
+
+.zoom-indicator {
+  position: absolute;
+  bottom: 0.75rem;
+  right: 0.75rem;
+  width: 36px;
+  height: 36px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.property-card:hover .zoom-indicator {
+  opacity: 1;
+}
+
+.zoom-indicator svg {
+  color: #D4AF37;
 }
 
 .badges {
@@ -370,5 +455,37 @@ onMounted(() => {
   .favorite-btn {
     background: rgba(0, 0, 0, 0.6);
   }
+  .compare-btn {
+  position: absolute;
+  top: 3.5rem;
+  right: 1rem;
+  z-index: 10;
+  padding: 0.5rem;
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid transparent;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.compare-btn:hover {
+  background: var(--color-gold-500);
+  transform: scale(1.1);
+}
+
+.compare-btn.active {
+  background: var(--color-gold-500);
+  border-color: var(--color-gold-600);
+}
+
+.compare-btn svg {
+  display: block;
+  color: var(--color-text);
+  transition: all 0.3s ease;
+}
+
+.compare-btn.active svg {
+  color: white;
+}
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <div class="search-page">
+  <div class="search-page" :class="{ 'has-comparison': comparisonStore.comparisonList.length > 0 }">
     <div class="container">
       <!-- Search Header -->
       <div class="search-header">
@@ -173,6 +173,10 @@
               Clear All Filters
             </button>
           </div>
+
+          <!-- Add before the closing </div> of the page -->
+            <ComparisonBar @open-comparison="comparisonModalOpen = true" />
+            <ComparisonModal :is-open="comparisonModalOpen" @close="comparisonModalOpen = false" /> 
         </main>
       </div>
     </div>
@@ -180,18 +184,24 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { usePropertiesStore } from '@/stores/properties';
-import PropertyCard from '@/components/property/PropertyCard.vue';
-import MapView from '@/components/property/MapView.vue';
-import type { Property, PropertyFilters } from '@/types/property';
+import { ref, computed, onMounted } from 'vue'
+import { usePropertiesStore } from '@/stores/properties'
+import PropertyCard from '@/components/property/PropertyCard.vue'
+import MapView from '@/components/property/MapView.vue'
+import { useRouter } from 'vue-router'
+import ComparisonBar from '@/components/comparison/ComparisonBar.vue'
+import ComparisonModal from '@/components/comparison/ComparisonModal.vue'
+import { useComparisonStore } from '@/stores/comparison'
 
 const route = useRoute();
 const router = useRouter();
 const propertiesStore = usePropertiesStore();
 
 const viewMode = ref<'grid' | 'map'>('grid');
+
+const comparisonModalOpen = ref(false)
+const comparisonStore = useComparisonStore()
+
 
 const localFilters = ref<PropertyFilters>({
   minPrice: undefined,
@@ -243,6 +253,7 @@ onMounted(() => {
     updateFilters();
   }
 });
+
 </script>
 
 <style scoped>
@@ -479,6 +490,15 @@ onMounted(() => {
   
   .properties-grid {
     grid-template-columns: 1fr;
+  }
+  /* Add padding when comparison bar is visible */
+  .search-page {
+    padding-bottom: 0;
+    transition: padding-bottom 0.3s ease;
+  }
+
+  .search-page.has-comparison {
+    padding-bottom: 120px;
   }
 }
 </style>

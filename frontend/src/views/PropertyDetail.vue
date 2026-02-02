@@ -25,34 +25,36 @@
     <!-- Property Content -->
     <div v-else>
       <!-- Hero Image -->
-      <section class="property-hero">
+      <!-- Image Gallery -->
+    <section class="gallery" @click="openLightbox(0)">
+      <div class="main-image">
         <img 
-          :src="property.image" 
-          :alt="property.title"
-          class="hero-image"
+          v-if="property.images && property.images.length > 0"
+          :src="property.images[0]" 
+          :alt="property.address"
         />
-        <div class="hero-overlay" />
+        <div v-else class="no-image">No Image Available</div>
         
-        <div class="hero-content container">
-          <div class="property-badges">
-            <span class="badge badge-type">{{ property.type }}</span>
-            <span 
-              v-if="property.status"
-              :class="['badge', `badge-${property.status.toLowerCase()}`]"
-            >
-              {{ property.status }}
-            </span>
-          </div>
-          <h1 class="property-title">{{ property.title }}</h1>
-          <div class="property-location">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/>
-              <circle cx="12" cy="10" r="3"/>
-            </svg>
-            {{ property.location }}
-          </div>
+        <!-- Gallery indicator if multiple images -->
+        <div v-if="allImages.length > 1" class="gallery-indicator">
+          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
+            <circle cx="9" cy="9" r="2"/>
+            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
+          </svg>
+          <span>{{ allImages.length }} photos</span>
         </div>
-      </section>
+      </div>
+    </section>
+
+    <!-- Add Lightbox at the end of template, before closing div -->
+    <ImageLightbox 
+      v-if="property"
+      :images="allImages"
+      :initial-index="lightboxIndex"
+      :is-open="lightboxOpen"
+      @close="lightboxOpen = false"
+    />
 
       <!-- Property Details -->
       <section class="property-info container">
@@ -212,22 +214,41 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
-import { useRoute, useRouter } from 'vue-router';
-import { usePropertiesStore } from '@/stores/properties';
-import { formatPrice } from '@/utils/propertyHelpers';
-import PriceHistoryChart from '@/components/property/PriceHistoryChart.vue';
+import { computed, onMounted, ref } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import { usePropertiesStore } from '@/stores/properties'
+import { formatPrice } from '@/utils/propertyHelpers'
+import PriceHistoryChart from '@/components/property/PriceHistoryChart.vue'
+import ImageLightbox from '@/components/common/ImageLightbox.vue'
 
-const route = useRoute();
-const router = useRouter();
-const propertiesStore = usePropertiesStore();
+const route = useRoute()
+const router = useRouter()
+const propertiesStore = usePropertiesStore()
 
-const property = computed(() => propertiesStore.selectedProperty);
+const property = computed(() => propertiesStore.selectedProperty)
+
+// Lightbox state
+const lightboxOpen = ref(false)
+const lightboxIndex = ref(0)
+
+const allImages = computed(() => {
+  if (!property.value) return []
+  const images = [property.value.image]
+  if (property.value.altPhotos && property.value.altPhotos.length > 0) {
+    images.push(...property.value.altPhotos)
+  }
+  return images
+})
+
+const openLightbox = (index: number) => {
+  lightboxIndex.value = index
+  lightboxOpen.value = true
+}
 
 onMounted(() => {
-  const propertyId = route.params.id as string;
-  propertiesStore.fetchPropertyById(propertyId);
-});
+  const propertyId = route.params.id as string
+  propertiesStore.fetchPropertyById(propertyId)
+})
 </script>
 
 <style scoped>
@@ -537,5 +558,37 @@ onMounted(() => {
   font-style: italic;
   text-align: right;
   }
+  .gallery {
+  cursor: pointer;
+  position: relative;
+}
+
+.gallery-indicator {
+  position: absolute;
+  bottom: 1.5rem;
+  right: 1.5rem;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(10px);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: all 0.3s ease;
+}
+
+.gallery:hover .gallery-indicator {
+  background: rgba(212, 175, 55, 0.9);
+  transform: scale(1.05);
+}
+
+.gallery-indicator svg {
+  width: 18px;
+  height: 18px;
+}
 }
 </style>

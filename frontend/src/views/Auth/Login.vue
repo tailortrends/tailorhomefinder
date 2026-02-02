@@ -1,51 +1,51 @@
 <template>
   <div class="auth-page">
-    <div class="auth-container">
-      <div class="auth-card">
+    <div class="auth-card">
+      <div class="auth-header">
         <h1>Welcome Back</h1>
-        <p class="subtitle">Sign in to your account</p>
+        <p>Sign in to your account</p>
+      </div>
 
-        <form @submit.prevent="handleLogin">
-          <div class="form-group">
-            <label for="email">Email</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              placeholder="Enter your email"
-              required
-            />
-          </div>
-
-          <div class="form-group">
-            <label for="password">Password</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              placeholder="Enter your password"
-              required
-            />
-          </div>
-
-          <div v-if="authStore.error" class="error-message">
-            {{ authStore.error }}
-          </div>
-
-          <button 
-            type="submit" 
-            class="btn btn-primary full-width"
-            :disabled="authStore.loading"
-          >
-            {{ authStore.loading ? 'Signing in...' : 'Sign In' }}
-          </button>
-        </form>
-
-        <div class="auth-footer">
-          <p>Don't have an account? 
-            <router-link :to="{ name: 'signup' }">Sign up</router-link>
-          </p>
+      <div class="auth-form">
+        <div class="form-group">
+          <label>Email</label>
+          <input 
+            v-model="email"
+            type="email" 
+            placeholder="you@email.com"
+            :class="{ 'error': errors.email }"
+          />
+          <span v-if="errors.email" class="error-text">{{ errors.email }}</span>
         </div>
+
+        <div class="form-group">
+          <label>Password</label>
+          <input 
+            v-model="password"
+            type="password" 
+            placeholder="••••••••"
+            :class="{ 'error': errors.password }"
+          />
+          <span v-if="errors.password" class="error-text">{{ errors.password }}</span>
+        </div>
+
+        <div v-if="errors.general" class="error-banner">
+          {{ errors.general }}
+        </div>
+
+        <button 
+          class="btn btn-primary full-width"
+          :disabled="loading"
+          @click="handleLogin"
+        >
+          <span v-if="loading" class="spinner small"></span>
+          <span v-else>Sign In</span>
+        </button>
+
+        <p class="auth-footer">
+          Don't have an account? 
+          <router-link :to="{ name: 'signup' }">Sign up</router-link>
+        </p>
       </div>
     </div>
   </div>
@@ -61,108 +61,209 @@ const authStore = useAuthStore()
 
 const email = ref('')
 const password = ref('')
+const loading = ref(false)
+const errors = ref<Record<string, string>>({})
+
+const validate = (): boolean => {
+  errors.value = {}
+
+  if (!email.value.trim()) {
+    errors.value.email = 'Email is required'
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value)) {
+    errors.value.email = 'Invalid email format'
+  }
+
+  if (!password.value) {
+    errors.value.password = 'Password is required'
+  }
+
+  return Object.keys(errors.value).length === 0
+}
 
 const handleLogin = async () => {
+  if (!validate()) return
+
+  loading.value = true
+  errors.value = {}
+
   try {
     await authStore.signIn(email.value, password.value)
-    router.push({ name: 'dashboard' })
-  } catch (error) {
-    // Error is handled in the store
-    console.error('Login error:', error)
+    router.push({ name: 'home' })
+  } catch (error: any) {
+    if (error.code === 'auth/invalid-credential') {
+      errors.value.general = 'Invalid email or password.'
+    } else if (error.code === 'auth/user-not-found') {
+      errors.value.general = 'No account found with this email.'
+    } else {
+      errors.value.general = error.message || 'Login failed. Please try again.'
+    }
+  } finally {
+    loading.value = false
   }
 }
 </script>
 
 <style scoped>
 .auth-page {
-  min-height: 100vh;
+  min-height: calc(100vh - 70px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, var(--color-primary-light) 0%, var(--color-primary) 100%);
-}
-
-.auth-container {
-  width: 100%;
-  max-width: 450px;
-  padding: var(--spacing-md);
+  padding: 2rem;
+  background: var(--color-background, #0c0c0c);
 }
 
 .auth-card {
-  background: white;
-  padding: var(--spacing-xl);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 420px;
+  background: var(--color-surface, #141414);
+  border: 1px solid rgba(212, 175, 55, 0.15);
+  border-radius: 0.75rem;
+  padding: 2.5rem;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
 }
 
-.auth-card h1 {
-  font-size: var(--font-size-2xl);
-  margin-bottom: var(--spacing-xs);
+.auth-header {
   text-align: center;
+  margin-bottom: 2rem;
 }
 
-.subtitle {
-  text-align: center;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--spacing-xl);
+.auth-header h1 {
+  font-family: var(--font-family-display, Georgia, serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+}
+
+.auth-header p {
+  color: #9ca3af;
+  font-size: 0.95rem;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
 }
 
 .form-group {
-  margin-bottom: var(--spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
 }
 
 .form-group label {
-  display: block;
-  margin-bottom: var(--spacing-sm);
-  font-weight: 500;
-  color: var(--color-text);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .form-group input {
-  width: 100%;
-  padding: var(--spacing-md);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  transition: border-color 0.2s;
+  padding: 0.75rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.04);
+  color: #ffffff;
+  font-size: 0.95rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.form-group input::placeholder {
+  color: #4b5563;
 }
 
 .form-group input:focus {
   outline: none;
-  border-color: var(--color-primary);
+  border-color: #D4AF37;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15);
 }
 
-.error-message {
-  background: #fee;
-  color: var(--color-error);
-  padding: var(--spacing-md);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--spacing-lg);
-  font-size: var(--font-size-sm);
+.form-group input.error {
+  border-color: #ef4444;
+}
+
+.error-text {
+  color: #ef4444;
+  font-size: 0.78rem;
+  margin-top: 0.15rem;
+}
+
+.error-banner {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: #f87171;
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-primary {
+  background: #C5A028;
+  color: #000;
+}
+
+.btn-primary:hover {
+  background: #D4AF37;
+  transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .full-width {
   width: 100%;
 }
 
-.btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
+.spinner {
+  border: 2px solid rgba(0, 0, 0, 0.3);
+  border-top: 2px solid #000;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
 .auth-footer {
-  margin-top: var(--spacing-lg);
   text-align: center;
-  color: var(--color-text-secondary);
+  color: #9ca3af;
+  font-size: 0.85rem;
+  margin-top: 0.5rem;
 }
 
 .auth-footer a {
-  color: var(--color-primary);
+  color: #D4AF37;
   text-decoration: none;
-  font-weight: 500;
+  font-weight: 600;
+  transition: color 0.2s;
 }
 
 .auth-footer a:hover {
+  color: #D4AF37;
   text-decoration: underline;
 }
 </style>

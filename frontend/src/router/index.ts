@@ -34,18 +34,22 @@ const router = createRouter({
       name: 'dashboard',
       component: () => import('@/views/Dashboard.vue'),
       meta: { requiresAuth: true }
+    },
+    {
+      path: '/admin',
+      name: 'admin',
+      component: () => import('@/views/Admin.vue'),
+      meta: { requiresAuth: true, requiresAdmin: true }
     }
   ]
 })
 
-// Navigation guard for protected routes
-router.beforeEach((to, from, next) => {
+// Navigation guard
+router.beforeEach((to) => {
   const authStore = useAuthStore()
-  
+
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    next({ name: 'login' })
-  } else {
-    next()
+    return { name: 'login' }
   }
 })
 

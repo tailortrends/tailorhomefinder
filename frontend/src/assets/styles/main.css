@@ -1,5 +1,9 @@
-/* Import Leaflet CSS for maps */
+/* Import Leaflet CSS for maps - MUST BE FIRST */
 @import 'leaflet/dist/leaflet.css';
+
+/* Tailwind CSS v4 + DaisyUI */
+@import "tailwindcss";
+@plugin "daisyui";
 
 /* Reset and Base Styles */
 * {
