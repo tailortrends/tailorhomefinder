@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import type { Property } from '@/types/property'
+import { inquiryService, type ContactFormData as InquiryFormData } from '@/services/inquiryService'
 
 const props = defineProps<{
   property: Property
@@ -16,6 +17,7 @@ interface ContactFormData {
   phone: string
   message: string
   propertyId: string
+  inquiryType?: 'general' | 'schedule_tour' | 'request_info' | 'make_offer'
 }
 
 // Form state
@@ -23,8 +25,9 @@ const formData = ref<ContactFormData>({
   name: '',
   email: '',
   phone: '',
-  message: `Hi, I'm interested in ${props.property.full_street_line}. Please send me more information.`,
-  propertyId: props.property.property_id
+  message: `Hi, I'm interested in ${props.property.street || props.property.title}. Please send me more information.`,
+  propertyId: props.property.id,
+  inquiryType: 'general'
 })
 
 const isSubmitting = ref(false)
@@ -55,50 +58,81 @@ const isFormValid = computed(() => {
 async function handleSubmit() {
   // Clear previous errors
   errors.value = {}
-  
+
   // Validate
   if (!formData.value.name.trim()) {
     errors.value.name = 'Name is required'
   }
-  
+
   if (!validateEmail(formData.value.email)) {
     errors.value.email = 'Please enter a valid email'
   }
-  
+
   if (!validatePhone(formData.value.phone)) {
     errors.value.phone = 'Please enter a valid phone number'
   }
-  
+
   if (!formData.value.message.trim()) {
     errors.value.message = 'Message is required'
   }
-  
+
   if (Object.keys(errors.value).length > 0) return
-  
+
   isSubmitting.value = true
-  
+
   try {
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    // Emit the form data
-    emit('submit', { ...formData.value })
-    
-    isSubmitted.value = true
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      isSubmitted.value = false
-      formData.value = {
-        name: '',
-        email: '',
-        phone: '',
-        message: `Hi, I'm interested in ${props.property.full_street_line}. Please send me more information.`,
-        propertyId: props.property.property_id
-      }
-    }, 3000)
+    // Determine inquiry type from message
+    let inquiryType: 'general' | 'schedule_tour' | 'request_info' | 'make_offer' = 'general'
+    const messageLower = formData.value.message.toLowerCase()
+    if (messageLower.includes('tour') || messageLower.includes('schedule') || messageLower.includes('visit')) {
+      inquiryType = 'schedule_tour'
+    } else if (messageLower.includes('offer')) {
+      inquiryType = 'make_offer'
+    } else if (messageLower.includes('information') || messageLower.includes('info')) {
+      inquiryType = 'request_info'
+    }
+
+    // Build property address
+    const propertyAddress = props.property.street
+      ? `${props.property.street}, ${props.property.city}, ${props.property.state} ${props.property.zipCode}`
+      : props.property.location || props.property.title
+
+    // Submit to API
+    const response = await inquiryService.submitContactForm({
+      name: formData.value.name,
+      email: formData.value.email,
+      phone: formData.value.phone,
+      message: formData.value.message,
+      property_id: formData.value.propertyId,
+      property_address: propertyAddress,
+      property_price: props.property.price,
+      inquiry_type: inquiryType
+    })
+
+    if (response.success) {
+      // Emit the form data for any parent handling
+      emit('submit', { ...formData.value })
+
+      isSubmitted.value = true
+
+      // Reset form after 5 seconds
+      setTimeout(() => {
+        isSubmitted.value = false
+        formData.value = {
+          name: '',
+          email: '',
+          phone: '',
+          message: `Hi, I'm interested in ${props.property.street || props.property.title}. Please send me more information.`,
+          propertyId: props.property.id,
+          inquiryType: 'general'
+        }
+      }, 5000)
+    } else {
+      errors.value.submit = response.message || 'Failed to send message. Please try again.'
+    }
   } catch (error) {
-    errors.value.submit = 'Failed to send message. Please try again.'
+    console.error('Contact form submission error:', error)
+    errors.value.submit = error instanceof Error ? error.message : 'Failed to send message. Please try again.'
   } finally {
     isSubmitting.value = false
   }
@@ -109,22 +143,27 @@ const quickActions = [
   {
     label: 'Schedule Tour',
     icon: 'calendar',
-    message: 'I would like to schedule a tour of this property.'
+    message: 'I would like to schedule a tour of this property.',
+    inquiryType: 'schedule_tour' as const
   },
   {
     label: 'Request Info',
     icon: 'info',
-    message: 'Please send me more information about this property.'
+    message: 'Please send me more information about this property.',
+    inquiryType: 'request_info' as const
   },
   {
     label: 'Make Offer',
     icon: 'document',
-    message: 'I am interested in making an offer on this property.'
+    message: 'I am interested in making an offer on this property.',
+    inquiryType: 'make_offer' as const
   }
 ]
 
-function setQuickMessage(message: string) {
-  formData.value.message = `${message} Property: ${props.property.full_street_line}`
+function setQuickMessage(message: string, inquiryType: 'general' | 'schedule_tour' | 'request_info' | 'make_offer' = 'general') {
+  const propertyRef = props.property.street || props.property.title
+  formData.value.message = `${message} Property: ${propertyRef}`
+  formData.value.inquiryType = inquiryType
 }
 
 const getIcon = (iconName: string) => {
@@ -152,7 +191,11 @@ const getIcon = (iconName: string) => {
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
         <h4 class="success-title">Message Sent!</h4>
-        <p class="success-text">An agent will contact you shortly.</p>
+        <p class="success-text">
+          {{ formData.inquiryType === 'schedule_tour'
+            ? 'An agent will contact you within 24 hours to schedule your tour.'
+            : 'An agent will contact you shortly. Check your email for confirmation.' }}
+        </p>
       </div>
     </Transition>
 
@@ -167,7 +210,7 @@ const getIcon = (iconName: string) => {
             :key="action.label"
             type="button"
             class="quick-action-btn"
-            @click="setQuickMessage(action.message)"
+            @click="setQuickMessage(action.message, action.inquiryType)"
           >
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="getIcon(action.icon)" />
