@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thank You for Your Inquiry</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #D4AF37;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .header .subtitle {
+            color: #999;
+            font-size: 14px;
+            margin-top: 8px;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #D4AF37;
+            border-radius: 50%;
+            margin: -40px auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .success-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: #1a1a1a;
+        }
+        .content {
+            padding: 20px 30px 30px;
+            text-align: center;
+        }
+        .greeting {
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+        .message {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 25px;
+        }
+        .property-card {
+            background-color: #f8f8f8;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            text-align: left;
+            border: 1px solid #eee;
+        }
+        .property-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .property-address {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .property-price {
+            font-size: 24px;
+            color: #D4AF37;
+            font-weight: 700;
+        }
+        .timeline {
+            text-align: left;
+            margin: 30px 0;
+        }
+        .timeline-item {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+        .timeline-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #D4AF37;
+            border-radius: 50%;
+            margin-right: 15px;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .timeline-dot.pending {
+            background-color: #ddd;
+        }
+        .timeline-content h4 {
+            margin: 0 0 5px 0;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+        .timeline-content p {
+            margin: 0;
+            color: #888;
+            font-size: 13px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #D4AF37;
+            color: #1a1a1a;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .cta-button.secondary {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+        .footer {
+            background-color: #f8f8f8;
+            padding: 25px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer a {
+            color: #D4AF37;
+            text-decoration: none;
+        }
+        .social-links {
+            margin: 15px 0;
+        }
+        .social-links a {
+            display: inline-block;
+            margin: 0 10px;
+            color: #888;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>TailorHomeFinder</h1>
+            <p class="subtitle">Luxury Real Estate</p>
+        </div>
+
+        <div class="content">
+            <div class="success-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/>
+                </svg>
+            </div>
+
+            <h2 class="greeting">Thank You, {{ name }}!</h2>
+            <p class="message">
+                We've received your inquiry and a member of our team will be in touch shortly.
+                We typically respond within 24 hours during business days.
+            </p>
+
+            {% if property_address %}
+            <div class="property-card">
+                <div class="property-label">Property You Inquired About</div>
+                <div class="property-address">{{ property_address }}</div>
+                {% if property_price %}
+                <div class="property-price">${{ "{:,.0f}".format(property_price) }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-content">
+                        <h4>Inquiry Received</h4>
+                        <p>Your message has been successfully submitted</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot pending"></div>
+                    <div class="timeline-content">
+                        <h4>Agent Assignment</h4>
+                        <p>A qualified agent will review your inquiry</p>
+                    </div>
+                </div>
+                <div class="timeline-item">
+                    <div class="timeline-dot pending"></div>
+                    <div class="timeline-content">
+                        <h4>Personal Contact</h4>
+                        <p>You'll receive a call or email within 24 hours</p>
+                    </div>
+                </div>
+            </div>
+
+            <p style="color: #666; font-size: 14px; margin-bottom: 20px;">
+                While you wait, feel free to explore more properties on our platform.
+            </p>
+
+            <a href="#" class="cta-button">Browse Properties</a>
+            <a href="#" class="cta-button secondary">Your Saved Homes</a>
+        </div>
+
+        <div class="footer">
+            <p><strong>Questions?</strong> Reply to this email or call us at (555) 123-4567</p>
+
+            <div class="social-links">
+                <a href="#">Facebook</a>
+                <a href="#">Instagram</a>
+                <a href="#">Twitter</a>
+            </div>
+
+            <p style="margin-top: 15px;">
+                TailorHomeFinder | Luxury Real Estate<br>
+                <a href="#">Unsubscribe</a> | <a href="#">Privacy Policy</a>
+            </p>
+
+            <p style="color: #aaa; font-size: 11px; margin-top: 15px;">
+                Reference: {{ inquiry_id }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>

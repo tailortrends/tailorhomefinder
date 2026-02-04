@@ -1,260 +1,248 @@
-Good thinking! Yes, let's start fresh. But first, let me create a **comprehensive handoff document** so the next Claude instance has everything needed to continue seamlessly.
-
----
-
-## 📝 **Creating Handoff Document**
-
-```bash
-cd /Users/shyamway/Desktop/Projects/homefinder
-
-cat > HANDOFF.md << 'EOF'
 # Tailor Home Finder - Project Handoff Document
-**Date:** February 2, 2026  
-**Status:** Backend Complete, Ready for Frontend Integration
+**Date:** February 4, 2026
+**Status:** Full-Stack Platform with Email Notification System
 
 ---
 
-## 🎯 PROJECT OVERVIEW
+## PROJECT OVERVIEW
 
-**Tailor Home Finder** - A luxury real estate platform for $1M+ properties on the East Coast.
+**Tailor Home Finder** - A luxury real estate platform for high-end properties.
 
-**Repository:** https://github.com/tailortrends/tailorhomefinder  
-**Project Path:** `/Users/shyamway/Desktop/Projects/homefinder/`
+**Repository:** https://github.com/tailortrends/tailorhomefinder
+**Project Path:** `/home/user/tailorhomefinder/`
 
 ---
 
-## ✅ WHAT'S COMPLETE
+## WHAT'S COMPLETE
 
 ### **Frontend (Vue 3 + TypeScript)** - 100% Complete
 - **Path:** `/frontend/`
 - **Running on:** http://localhost:5173 or 5174
-- **Stack:** Vue 3, Pinia, Firebase Auth, Tailwind CSS, DaisyUI
-- **Features:**
-  - ✅ User authentication (Firebase)
-  - ✅ Property search with filters
-  - ✅ Interactive maps (Leaflet)
-  - ✅ Price history charts (Chart.js)
-  - ✅ User dashboard with AI chat
-  - ✅ Admin panel
-  - ✅ Image lightbox gallery
-  - ✅ Property comparison (up to 3 properties)
-  - ✅ Mobile responsive
+- **Stack:** Vue 3, Pinia, Firebase Auth, Tailwind CSS, DaisyUI, Leaflet, Chart.js
 
-**Current Data Source:** Static JSON files in `/frontend/public/data/az/` (5 zip codes, ~52 properties)
+**Features:**
+- User authentication (Firebase)
+- Property search with advanced filters
+- Interactive maps (Leaflet with dark theme)
+- Price history charts (Chart.js)
+- User dashboard
+- Admin panel with tabs
+- Image lightbox gallery
+- Property comparison (up to 3 properties)
+- Favorites system (localStorage)
+- Contact form with real API integration
+- Mobile responsive design
 
-### **Backend (FastAPI + PostgreSQL)** - 100% Complete ✨
+### **Backend (FastAPI + PostgreSQL)** - 100% Complete
 - **Path:** `/backend/`
 - **Running on:** http://localhost:8000
 - **API Docs:** http://localhost:8000/docs
-- **Stack:** FastAPI, SQLAlchemy, PostgreSQL 17, Pydantic
-- **Database:** PostgreSQL via Postgres.app (port 5432)
+- **Stack:** FastAPI, SQLAlchemy, PostgreSQL, Pydantic, fastapi-mail
 
-**Data Loaded:** 247,941 properties across multiple states (15 min load time)
+**Data Loaded:** 247,941 properties across multiple states
 
 **API Endpoints:**
-- `GET /api/properties/` - List properties with filters
-- `GET /api/properties/{id}` - Get single property
-- `GET /api/properties/stats/overview` - Platform statistics
+```
+Properties:
+- GET  /api/properties/           - List properties with filters & pagination
+- GET  /api/properties/{id}       - Get single property
+- GET  /api/properties/stats/overview - Platform statistics
 
-**Database Connection:**
+Inquiries (NEW):
+- POST /api/inquiries/contact     - Submit contact form (sends emails)
+- GET  /api/inquiries/            - List all inquiries (admin)
+- GET  /api/inquiries/{id}        - Get single inquiry
+- PATCH /api/inquiries/{id}/status - Update inquiry status
+- GET  /api/inquiries/stats/overview - Inquiry statistics
 ```
-DATABASE_URL=postgresql://tailoruser:tailorpass123@localhost:5432/tailorhomefinder
-```
+
+### **Email Notification System** - NEW
+- **fastapi-mail** integration
+- HTML email templates with luxury branding
+- Background task email sending
+- Three email templates:
+  1. `inquiry_notification.html` - Sent to admin/agent
+  2. `inquiry_confirmation.html` - Sent to user
+  3. `tour_scheduled.html` - Sent for tour requests
+
+**Email Configuration:**
+- SMTP support (Gmail, SendGrid, Mailgun)
+- Environment-based configuration
+- Development mode (EMAIL_ENABLED=false logs emails)
+- Production mode (EMAIL_ENABLED=true sends real emails)
 
 ---
 
-## 📁 PROJECT STRUCTURE
+## PROJECT STRUCTURE
 
 ```
-homefinder/
+tailorhomefinder/
 ├── backend/
-│   ├── .env (DATABASE_URL, CORS, DATA_PATH)
-│   ├── run.py (start server: uv run python run.py)
-│   ├── load_all_data.py (data importer - already run)
+│   ├── .env.example (template for environment variables)
+│   ├── run.py (start server)
+│   ├── create_tables.py (create database tables)
 │   ├── src/app/
-│   │   ├── main.py (FastAPI app)
-│   │   ├── api/properties.py (property endpoints)
-│   │   ├── models/property.py (SQLAlchemy model)
-│   │   ├── schemas/property.py (Pydantic schemas)
-│   │   └── db/database.py (DB connection)
+│   │   ├── main.py (FastAPI app with routers)
+│   │   ├── api/
+│   │   │   ├── properties.py (property endpoints)
+│   │   │   └── inquiries.py (inquiry/contact endpoints) NEW
+│   │   ├── models/
+│   │   │   ├── property.py (SQLAlchemy Property model)
+│   │   │   └── inquiry.py (SQLAlchemy Inquiry model) NEW
+│   │   ├── schemas/
+│   │   │   ├── property.py (Pydantic property schemas)
+│   │   │   └── inquiry.py (Pydantic inquiry schemas) NEW
+│   │   ├── services/
+│   │   │   ├── property_service.py
+│   │   │   └── email_service.py NEW
+│   │   ├── core/
+│   │   │   ├── config.py
+│   │   │   └── email_config.py NEW
+│   │   ├── templates/email/ NEW
+│   │   │   ├── inquiry_notification.html
+│   │   │   ├── inquiry_confirmation.html
+│   │   │   └── tour_scheduled.html
+│   │   └── db/database.py
 │   └── pyproject.toml (UV dependencies)
 ├── frontend/
 │   ├── src/
-│   │   ├── views/ (Home, Search, PropertyDetail, Dashboard, Admin)
-│   │   ├── components/ (PropertyCard, MapView, Charts, Comparison, etc.)
-│   │   ├── stores/ (auth, properties, comparison)
-│   │   └── services/realEstate/dataService.ts (NEEDS UPDATE)
-│   └── public/data/az/ (static JSON - to be replaced)
-└── data/
-    └── states/ (8,477 JSON files - source data)
+│   │   ├── views/ (Home, Search, PropertyDetail, Dashboard, Admin, Favorites)
+│   │   ├── components/
+│   │   │   └── property/
+│   │   │       ├── ContactForm.vue (updated with API integration)
+│   │   │       └── ... (17 total components)
+│   │   ├── stores/ (auth, properties, favorites, comparison)
+│   │   └── services/
+│   │       ├── realEstate/dataService.ts
+│   │       └── inquiryService.ts NEW
+│   └── public/data/
+└── data/states/ (8,477 JSON source files)
 ```
 
 ---
 
-## 🚀 NEXT STEPS
+## HOW TO START EVERYTHING
 
-### **IMMEDIATE: Connect Frontend to Backend** (Highest Priority)
-
-**Goal:** Replace static JSON files with real API calls to access all 247K properties
-
-**Files to Update:**
-1. `/frontend/src/services/realEstate/dataService.ts`
-   - Replace `fetch('/data/az/...')` with `fetch('http://localhost:8000/api/properties')`
-   - Update interfaces to match backend schemas
-
-2. `/frontend/src/stores/properties.ts`
-   - Update `loadProperties()` to use API
-   - Add pagination support
-   - Handle loading states
-
-**Expected Results:**
-- Search now queries 247K+ properties
-- Filters work across all states
-- Real-time data from PostgreSQL
-
----
-
-## 🛠️ HOW TO START EVERYTHING
-
-### **Start Backend:**
-```bash
-cd /Users/shyamway/Desktop/Projects/homefinder/backend
-uv run python run.py
-# API: http://localhost:8000
-# Docs: http://localhost:8000/docs
-```
-
-### **Start Frontend:**
-```bash
-cd /Users/shyamway/Desktop/Projects/homefinder/frontend
-npm run dev
-# App: http://localhost:5173
-```
-
-### **Start PostgreSQL:**
-- Already running via Postgres.app on port 5432
+### **1. Start PostgreSQL**
+- Ensure PostgreSQL is running on port 5432
 - Database: `tailorhomefinder`
-- User: `tailoruser` / Password: `tailorpass123`
 
----
-
-## 📊 DATABASE STATS
-
-- **Total Properties:** 247,941
-- **States:** VA (Virginia) + others
-- **Files Processed:** 8,477 JSON files
-- **Load Time:** ~15 minutes
-- **Duplicates Skipped:** 8,202
-
-**Check stats:**
+### **2. Start Backend**
 ```bash
-cd backend
-uv run python check_stats.py
-```
+cd /home/user/tailorhomefinder/backend
 
----
+# Create .env file from template
+cp .env.example .env
+# Edit .env with your database credentials
 
-## 🔑 KEY CREDENTIALS
+# Create tables (if new database)
+uv run python create_tables.py
 
-**Firebase Admin:** stailor45@gmail.com  
-**PostgreSQL:** tailoruser / tailorpass123  
-**Database:** tailorhomefinder  
-
----
-
-## 📝 IMPORTANT NOTES
-
-1. **UV Package Manager:** All Python deps managed with `uv` (not pip/venv)
-2. **Frontend runs on port 5173 or 5174** depending on availability
-3. **Backend CORS configured** for both ports
-4. **Memory system enabled** - Claude remembers project context
-5. **Skills available** in `/mnt/skills/` for document creation
-
----
-
-## 🎯 AVAILABLE NEXT OPTIONS
-
-**Option A:** Connect Frontend to Backend (30 min)  
-**Option B:** Deploy to Production (Railway/Render/Fly.io) (45 min)  
-**Option C:** Add Advanced Features (geospatial, alerts, etc.) (1-2 hrs)  
-**Option D:** Performance Optimization & Polish (1 hr)  
-
----
-
-## 📞 WHERE WE LEFT OFF
-
-Just completed loading 247,941 properties into PostgreSQL. Backend API is fully functional and tested. Frontend is complete but still using static JSON files. Ready to connect frontend to backend as the next step.
-
-**User preference:** Wants to continue in a new chat to avoid context compression.
-
----
-
-**Generated:** February 2, 2026, 8:45 PM
-EOF
-
-# Also create a quick reference
-cat > QUICK_START.md << 'EOF'
-# Quick Start Guide
-
-## Start Everything
-
-### 1. PostgreSQL (Should already be running)
-- Check: Open Postgres.app
-- Database: tailorhomefinder
-- Port: 5432
-
-### 2. Backend API
-```bash
-cd /Users/shyamway/Desktop/Projects/homefinder/backend
+# Start server
 uv run python run.py
 ```
 Visit: http://localhost:8000/docs
 
-### 3. Frontend
+### **3. Start Frontend**
 ```bash
-cd /Users/shyamway/Desktop/Projects/homefinder/frontend
-npm run dev
+cd /home/user/tailorhomefinder/frontend
+pnpm install
+pnpm dev
 ```
 Visit: http://localhost:5173
 
-## Key Stats
-- 247,941 properties loaded
-- 8,477 zip codes
-- FastAPI + PostgreSQL backend ready
-- Vue 3 frontend ready
+---
 
-## Next: Connect Frontend to Backend
-Update: `/frontend/src/services/realEstate/dataService.ts`
-Change API endpoint from static files to: `http://localhost:8000/api/properties`
-EOF
+## EMAIL CONFIGURATION
 
-echo "✅ Handoff documents created!"
+To enable real email sending, update `/backend/.env`:
+
+```env
+# Enable email sending
+EMAIL_ENABLED=true
+
+# Gmail SMTP (use App Password, not regular password)
+MAIL_USERNAME=your-email@gmail.com
+MAIL_PASSWORD=your-app-password
+MAIL_FROM=noreply@tailorhomefinder.com
+MAIL_FROM_NAME=TailorHomeFinder
+MAIL_PORT=587
+MAIL_SERVER=smtp.gmail.com
+MAIL_STARTTLS=true
+MAIL_SSL_TLS=false
+
+# Admin email for notifications
+ADMIN_EMAIL=admin@yourdomain.com
+```
+
+**Development Mode (default):**
+- `EMAIL_ENABLED=false`
+- Emails are logged but not sent
+- Useful for testing without SMTP setup
+
+---
+
+## DATABASE STATS
+
+- **Total Properties:** 247,941
+- **Files Processed:** 8,477 JSON files
+- **Tables:** properties, inquiries
+
+**Create inquiries table:**
+```bash
+cd backend
+uv run python create_tables.py
 ```
 
 ---
 
-## 🎉 **Documents Created!**
+## KEY CREDENTIALS
 
-I've created two files in your project root:
-
-1. **`HANDOFF.md`** - Complete project state, what's done, what's next
-2. **`QUICK_START.md`** - How to start everything quickly
-
----
-
-## ✅ **Ready for New Chat!**
-
-**When you start the new chat, just say:**
-
-> "I'm continuing the Tailor Home Finder project. Please read HANDOFF.md in my project folder to understand where we are."
-
-The new Claude instance will have full context and can pick up exactly where we left off!
+**PostgreSQL:**
+- User: `tailoruser`
+- Password: `tailorpass123`
+- Database: `tailorhomefinder`
+- Port: 5432
 
 ---
 
-**You've built something amazing today! 🚀**
-- Professional Vue 3 frontend ✅
-- Production FastAPI backend ✅
-- 247,941 properties in PostgreSQL ✅
+## NEXT STEPS / FUTURE FEATURES
 
-Ready when you are! 🎊
+1. **User Registration Backend** - Store user data in PostgreSQL
+2. **Favorites Backend API** - Persist favorites to database
+3. **Saved Searches** - Store and alert on new matches
+4. **Price Drop Alerts** - Email notifications for price changes
+5. **Geospatial Search** - Search by radius/polygon
+6. **Production Deployment** - Railway/Render/Fly.io
+
+---
+
+## RECENT CHANGES (February 4, 2026)
+
+### Email Notification System
+- Added `fastapi-mail` dependency
+- Created email configuration (`core/email_config.py`)
+- Created Inquiry model and schemas
+- Created email service with HTML templates
+- Created inquiries API endpoints
+- Updated ContactForm.vue to call real API
+- Created frontend inquiry service
+
+### Files Added/Modified:
+**Backend (new):**
+- `src/app/api/inquiries.py`
+- `src/app/models/inquiry.py`
+- `src/app/schemas/inquiry.py`
+- `src/app/services/email_service.py`
+- `src/app/core/email_config.py`
+- `src/app/templates/email/*.html` (3 templates)
+- `create_tables.py`
+- `.env.example`
+
+**Frontend (modified):**
+- `src/services/inquiryService.ts` (new)
+- `src/components/property/ContactForm.vue` (updated)
+
+---
+
+**Generated:** February 4, 2026

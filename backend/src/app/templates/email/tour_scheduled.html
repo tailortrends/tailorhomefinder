@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tour Request Received</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
+            padding: 40px 30px;
+            text-align: center;
+        }
+        .header h1 {
+            color: #D4AF37;
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 30px;
+        }
+        .calendar-icon {
+            width: 80px;
+            height: 80px;
+            background-color: #D4AF37;
+            border-radius: 12px;
+            margin: -40px auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .calendar-icon svg {
+            width: 40px;
+            height: 40px;
+            fill: #1a1a1a;
+        }
+        .title {
+            font-size: 24px;
+            color: #1a1a1a;
+            margin-bottom: 15px;
+            font-weight: 600;
+            text-align: center;
+        }
+        .message {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+        .property-card {
+            background-color: #f8f8f8;
+            border-radius: 12px;
+            padding: 25px;
+            margin: 25px 0;
+            border-left: 4px solid #D4AF37;
+        }
+        .property-label {
+            font-size: 12px;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+        .property-address {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .property-price {
+            font-size: 24px;
+            color: #D4AF37;
+            font-weight: 700;
+        }
+        .info-box {
+            background-color: #fff8e7;
+            border: 1px solid #D4AF37;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+        }
+        .info-box h4 {
+            color: #b8941f;
+            margin: 0 0 10px 0;
+            font-size: 14px;
+        }
+        .info-box p {
+            margin: 0;
+            color: #666;
+            font-size: 14px;
+        }
+        .next-steps {
+            margin: 30px 0;
+        }
+        .next-steps h3 {
+            color: #1a1a1a;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        .step-number {
+            width: 28px;
+            height: 28px;
+            background-color: #D4AF37;
+            color: #1a1a1a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 14px;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+        .step-content {
+            padding-top: 3px;
+        }
+        .step-content h4 {
+            margin: 0 0 5px 0;
+            color: #1a1a1a;
+            font-size: 14px;
+        }
+        .step-content p {
+            margin: 0;
+            color: #888;
+            font-size: 13px;
+        }
+        .cta-button {
+            display: inline-block;
+            background-color: #D4AF37;
+            color: #1a1a1a;
+            text-decoration: none;
+            padding: 14px 28px;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 10px 5px;
+        }
+        .footer {
+            background-color: #f8f8f8;
+            padding: 25px 30px;
+            text-align: center;
+            font-size: 12px;
+            color: #888;
+        }
+        .footer a {
+            color: #D4AF37;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>TailorHomeFinder</h1>
+        </div>
+
+        <div class="content">
+            <div class="calendar-icon">
+                <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M19 4h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11zM9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm-8 4H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2z"/>
+                </svg>
+            </div>
+
+            <h2 class="title">Tour Request Received!</h2>
+            <p class="message">
+                Hi {{ name }}, we've received your tour request. An agent will contact you
+                within 24 hours to confirm the date and time.
+            </p>
+
+            {% if property_address %}
+            <div class="property-card">
+                <div class="property-label">Property Tour Requested</div>
+                <div class="property-address">{{ property_address }}</div>
+                {% if property_price %}
+                <div class="property-price">${{ "{:,.0f}".format(property_price) }}</div>
+                {% endif %}
+            </div>
+            {% endif %}
+
+            <div class="info-box">
+                <h4>What to Expect</h4>
+                <p>
+                    Our agent will reach out via phone or email to coordinate a tour time
+                    that works best for your schedule. Tours typically last 30-45 minutes.
+                </p>
+            </div>
+
+            <div class="next-steps">
+                <h3>Next Steps</h3>
+                <div class="step">
+                    <div class="step-number">1</div>
+                    <div class="step-content">
+                        <h4>Agent Contact</h4>
+                        <p>An agent will call or email you within 24 hours</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">2</div>
+                    <div class="step-content">
+                        <h4>Schedule Confirmation</h4>
+                        <p>Confirm a tour date and time that works for you</p>
+                    </div>
+                </div>
+                <div class="step">
+                    <div class="step-number">3</div>
+                    <div class="step-content">
+                        <h4>Property Tour</h4>
+                        <p>Meet your agent at the property for a private showing</p>
+                    </div>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <a href="#" class="cta-button">View Property Details</a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p><strong>Need to reschedule?</strong> Reply to this email or call (555) 123-4567</p>
+            <p style="margin-top: 15px;">
+                TailorHomeFinder | Luxury Real Estate<br>
+                Reference: {{ inquiry_id }}
+            </p>
+        </div>
+    </div>
+</body>
+</html>
