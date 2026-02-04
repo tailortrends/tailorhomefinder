@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import Favorites from '@/views/Favorites.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -40,6 +41,15 @@ const router = createRouter({
       name: 'admin',
       component: () => import('@/views/Admin.vue'),
       meta: { requiresAuth: true, requiresAdmin: true }
+    },
+    {
+      path: '/favorites',
+      name: 'favorites',
+      component: Favorites,
+      meta: {
+        title: 'My Favorites'
+        // Optionally add: requiresAuth: true (if you implement auth)
+      }
     }
   ]
 })

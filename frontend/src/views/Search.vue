@@ -1,504 +1,257 @@
+<script setup lang="ts">
+import { ref, onMounted, watch } from 'vue'
+import { useRouter } from 'vue-router'
+import { usePropertiesStore } from '@/stores/properties'
+import SearchFilters from '@/components/property/SearchFilters.vue'
+import PropertyGrid from '@/components/property/PropertyGrid.vue'
+import Pagination from '@/components/property/Pagination.vue'
+import type { Property, PropertyFilters } from '@/types/property'
+
+const router = useRouter()
+const propertiesStore = usePropertiesStore()
+
+// Sort options
+const sortOptions = [
+  { label: 'Newest', value: 'newest' },
+  { label: 'Price: Low to High', value: 'price' },
+  { label: 'Price: High to Low', value: 'price_desc' },
+  { label: 'Square Feet', value: 'sqft' },
+  { label: 'Bedrooms', value: 'beds' }
+]
+
+const selectedSort = ref(propertiesStore.sortBy)
+
+// Load properties on mount
+onMounted(async () => {
+  if (propertiesStore.properties.length === 0) {
+    await propertiesStore.fetchProperties()
+  }
+})
+
+// Watch for sort changes
+watch(selectedSort, (newSort) => {
+  propertiesStore.setSortBy(newSort as any)
+})
+
+// Handle filter updates
+function handleFiltersUpdate(newFilters: PropertyFilters) {
+  propertiesStore.updateFilters(newFilters)
+}
+
+// Handle search
+async function handleSearch() {
+  const location = propertiesStore.filters.location
+  
+  // Check if location is a ZIP code (5 digits)
+  if (location && /^\d{5}$/.test(location)) {
+    await propertiesStore.fetchProperties(location)
+  } else {
+    // For now, just fetch all properties
+    // In production, this would search by city/state
+    await propertiesStore.fetchProperties()
+  }
+}
+
+// Handle property click
+function handlePropertyClick(property: Property) {
+  router.push({
+    name: 'property-detail',
+    params: { id: property.property_id }
+  })
+}
+
+// Handle page change
+function handlePageChange(page: number) {
+  propertiesStore.setPage(page)
+  // Scroll to top of results
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+</script>
+
 <template>
-  <div class="search-page" :class="{ 'has-comparison': comparisonStore.comparisonList.length > 0 }">
-    <div class="container">
-      <!-- Search Header -->
-      <div class="search-header">
-        <div class="search-info">
-          <h1>Search Results</h1>
-          <p class="result-count">{{ propertiesStore.filteredProperties.length }} properties found</p>
+  <div class="search-page">
+    <!-- Hero Section -->
+    <div class="hero-section">
+      <div class="hero-content">
+        <h1 class="hero-title">
+          Find Your Dream Home
+        </h1>
+        <p class="hero-subtitle">
+          Search through thousands of luxury properties
+        </p>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8">
+      <!-- Search Filters -->
+      <SearchFilters
+        :filters="propertiesStore.filters"
+        @update:filters="handleFiltersUpdate"
+        @search="handleSearch"
+      />
+
+      <!-- Results Header -->
+      <div class="results-header">
+        <div class="results-info">
+          <h2 class="results-count">
+            {{ propertiesStore.totalProperties }} 
+            {{ propertiesStore.totalProperties === 1 ? 'Property' : 'Properties' }}
+            {{ propertiesStore.hasFilters ? 'Match Your Search' : 'Available' }}
+          </h2>
+          
+          <p v-if="propertiesStore.filters.location" class="results-location">
+            in {{ propertiesStore.filters.location }}
+          </p>
         </div>
-        
-        <!-- View Toggle -->
-        <div class="view-toggle">
-          <button 
-            :class="['toggle-btn', { active: viewMode === 'grid' }]"
-            @click="viewMode = 'grid'"
+
+        <!-- Sort Dropdown -->
+        <div class="sort-control">
+          <label class="sort-label">Sort by:</label>
+          <select
+            v-model="selectedSort"
+            class="select select-bordered select-sm"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <rect width="7" height="7" x="3" y="3" rx="1"/>
-              <rect width="7" height="7" x="14" y="3" rx="1"/>
-              <rect width="7" height="7" x="3" y="14" rx="1"/>
-              <rect width="7" height="7" x="14" y="14" rx="1"/>
-            </svg>
-            Grid
-          </button>
-          <button 
-            :class="['toggle-btn', { active: viewMode === 'map' }]"
-            @click="viewMode = 'map'"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M14.106 5.553a2 2 0 0 0 1.788 0l3.659-1.83A1 1 0 0 1 21 4.619v12.764a1 1 0 0 1-.553.894l-4.553 2.277a2 2 0 0 1-1.788 0l-4.212-2.106a2 2 0 0 0-1.788 0l-3.659 1.83A1 1 0 0 1 3 19.381V6.618a1 1 0 0 1 .553-.894l4.553-2.277a2 2 0 0 1 1.788 0z"/>
-              <path d="M15 5.764v15"/>
-              <path d="M9 3.236v15"/>
-            </svg>
-            Map
-          </button>
+            <option
+              v-for="option in sortOptions"
+              :key="option.value"
+              :value="option.value"
+            >
+              {{ option.label }}
+            </option>
+          </select>
         </div>
       </div>
 
-      <div class="search-layout">
-        <!-- Filters Sidebar -->
-        <aside class="filters">
-          <div class="filters-header">
-            <h3>Filters</h3>
-            <button 
-              v-if="hasActiveFilters"
-              class="clear-all-btn"
-              @click="clearAllFilters"
-            >
-              Clear All
-            </button>
-          </div>
-          
-          <div class="filter-group">
-            <label>Price Range</label>
-            <div class="price-inputs">
-              <input 
-                v-model.number="localFilters.minPrice" 
-                type="number" 
-                placeholder="Min"
-                @input="updateFilters"
-              />
-              <span>to</span>
-              <input 
-                v-model.number="localFilters.maxPrice" 
-                type="number" 
-                placeholder="Max"
-                @input="updateFilters"
-              />
-            </div>
-          </div>
+      <!-- Property Grid -->
+      <PropertyGrid
+        :properties="propertiesStore.paginatedProperties"
+        :loading="propertiesStore.loading"
+        @property-click="handlePropertyClick"
+      />
 
-          <div class="filter-group">
-            <label>Bedrooms</label>
-            <input 
-              v-model.number="localFilters.minBedrooms" 
-              type="number" 
-              min="0"
-              placeholder="Min bedrooms"
-              @input="updateFilters"
-            />
-          </div>
+      <!-- Pagination -->
+      <Pagination
+        v-if="propertiesStore.totalPages > 1"
+        :current-page="propertiesStore.currentPage"
+        :total-pages="propertiesStore.totalPages"
+        :total-items="propertiesStore.totalProperties"
+        @page-change="handlePageChange"
+      />
 
-          <div class="filter-group">
-            <label>Bathrooms</label>
-            <input 
-              v-model.number="localFilters.minBathrooms" 
-              type="number" 
-              min="0"
-              step="0.5"
-              placeholder="Min bathrooms"
-              @input="updateFilters"
-            />
-          </div>
-
-          <div class="filter-group">
-            <label>Property Type</label>
-            <select v-model="localFilters.propertyType" @change="updateFilters">
-              <option value="">All Types</option>
-              <option value="House">Single Family</option>
-              <option value="Condo">Condo</option>
-              <option value="Townhouse">Townhouse</option>
-              <option value="Land">Land</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>Status</label>
-            <select v-model="localFilters.status" @change="updateFilters">
-              <option value="">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Sold">Sold</option>
-            </select>
-          </div>
-
-          <div class="filter-group">
-            <label>City</label>
-            <input 
-              v-model="localFilters.city" 
-              type="text"
-              placeholder="Enter city name"
-              @input="updateFilters"
-            />
-          </div>
-        </aside>
-
-        <!-- Results -->
-        <main class="results">
-          <!-- Loading State -->
-          <div v-if="propertiesStore.loading" class="loading-state">
-            <div class="spinner"></div>
-            <p>Loading properties...</p>
-          </div>
-
-          <!-- Error State -->
-          <div v-else-if="propertiesStore.error" class="error-state">
-            <p>{{ propertiesStore.error }}</p>
-            <button class="btn btn-primary" @click="propertiesStore.fetchProperties()">
-              Try Again
-            </button>
-          </div>
-
-          <!-- Map View -->
-          <div v-else-if="viewMode === 'map'" class="map-view">
-            <MapView
-              :properties="propertiesStore.filteredProperties"
-              :is-filtered="hasActiveFilters"
-              @select="handlePropertySelect"
-              @reset-filter="clearAllFilters"
-            />
-          </div>
-
-          <!-- Grid View -->
-          <div v-else-if="propertiesStore.filteredProperties.length > 0" class="properties-grid">
-            <PropertyCard
-              v-for="property in propertiesStore.filteredProperties"
-              :key="property.id"
-              :property="property"
-              @select="handlePropertySelect"
-            />
-          </div>
-
-          <!-- Empty State -->
-          <div v-else class="empty-state">
-            <svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="m21 21-4.3-4.3"/>
-            </svg>
-            <h3>No properties match your criteria</h3>
-            <p>Try adjusting your filters or search terms.</p>
-            <button class="btn btn-primary" @click="clearAllFilters">
-              Clear All Filters
-            </button>
-          </div>
-
-          <!-- Add before the closing </div> of the page -->
-            <ComparisonBar @open-comparison="comparisonModalOpen = true" />
-            <ComparisonModal :is-open="comparisonModalOpen" @close="comparisonModalOpen = false" /> 
-        </main>
+      <!-- Error State -->
+      <div v-if="propertiesStore.error" class="alert alert-error mt-6">
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+          />
+        </svg>
+        <span>{{ propertiesStore.error }}</span>
       </div>
     </div>
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { usePropertiesStore } from '@/stores/properties'
-import PropertyCard from '@/components/property/PropertyCard.vue'
-import MapView from '@/components/property/MapView.vue'
-import { useRouter } from 'vue-router'
-import ComparisonBar from '@/components/comparison/ComparisonBar.vue'
-import ComparisonModal from '@/components/comparison/ComparisonModal.vue'
-import { useComparisonStore } from '@/stores/comparison'
-
-const route = useRoute();
-const router = useRouter();
-const propertiesStore = usePropertiesStore();
-
-const viewMode = ref<'grid' | 'map'>('grid');
-
-const comparisonModalOpen = ref(false)
-const comparisonStore = useComparisonStore()
-
-
-const localFilters = ref<PropertyFilters>({
-  minPrice: undefined,
-  maxPrice: undefined,
-  minBedrooms: undefined,
-  minBathrooms: undefined,
-  propertyType: undefined,
-  city: undefined,
-  status: undefined
-});
-
-const hasActiveFilters = computed(() => {
-  return Object.values(localFilters.value).some(value => 
-    value !== undefined && value !== '' && value !== null
-  );
-});
-
-const updateFilters = () => {
-  propertiesStore.setFilters(localFilters.value);
-};
-
-const clearAllFilters = () => {
-  localFilters.value = {
-    minPrice: undefined,
-    maxPrice: undefined,
-    minBedrooms: undefined,
-    minBathrooms: undefined,
-    propertyType: undefined,
-    city: undefined,
-    status: undefined
-  };
-  propertiesStore.clearFilters();
-};
-
-const handlePropertySelect = (property: Property) => {
-  router.push({
-    name: 'property-detail',
-    params: { id: property.id }
-  });
-};
-
-onMounted(() => {
-  propertiesStore.fetchProperties();
-  
-  // Handle search query from URL
-  const searchQuery = route.query.q as string;
-  if (searchQuery) {
-    localFilters.value.city = searchQuery;
-    updateFilters();
-  }
-});
-
-</script>
-
 <style scoped>
 .search-page {
-  padding: 2rem 0;
-  min-height: 100vh;
+  @apply min-h-screen bg-base-200;
 }
 
-.search-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2rem;
-  padding-bottom: 1.5rem;
-  border-bottom: 1px solid var(--color-border);
+/* Hero Section */
+.hero-section {
+  @apply relative bg-gradient-to-br from-primary to-secondary;
+  @apply text-white py-16 mb-8;
+  overflow: hidden;
 }
 
-.search-info h1 {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-3xl);
-  font-weight: 700;
-  color: var(--color-text);
-  margin-bottom: 0.25rem;
+.hero-section::before {
+  content: '';
+  @apply absolute inset-0;
+  background: 
+    radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(255, 255, 255, 0.1) 0%, transparent 50%);
+  animation: backgroundShift 10s ease-in-out infinite;
 }
 
-.result-count {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-base);
+.hero-content {
+  @apply container mx-auto px-4 relative z-10 text-center;
 }
 
-.view-toggle {
-  display: flex;
-  gap: 0.5rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: 0.25rem;
+.hero-title {
+  @apply text-4xl md:text-5xl lg:text-6xl font-bold mb-4;
+  font-feature-settings: 'ss01', 'ss02';
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  animation: fadeInUp 0.8s ease-out;
 }
 
-.toggle-btn {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1rem;
-  border: none;
-  background: transparent;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-sm);
-  font-weight: 500;
-  transition: all 0.2s ease;
+.hero-subtitle {
+  @apply text-lg md:text-xl text-white/90;
+  animation: fadeInUp 0.8s ease-out 0.2s both;
 }
 
-.toggle-btn:hover {
-  color: var(--color-text);
-  background: rgba(212, 175, 55, 0.1);
+/* Results Header */
+.results-header {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6;
 }
 
-.toggle-btn.active {
-  background: var(--color-gold-500);
-  color: #000;
+.results-info {
+  @apply flex-1;
 }
 
-.search-layout {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 2rem;
+.results-count {
+  @apply text-2xl md:text-3xl font-bold text-base-content;
+  font-feature-settings: 'ss01', 'ss02';
 }
 
-.filters {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  padding: 1.5rem;
-  border-radius: var(--radius-lg);
-  height: fit-content;
-  position: sticky;
-  top: 2rem;
+.results-location {
+  @apply text-base-content/60 mt-1;
 }
 
-.filters-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
+.sort-control {
+  @apply flex items-center gap-3;
 }
 
-.filters h3 {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-xl);
-  font-weight: 700;
-  color: var(--color-text);
+.sort-label {
+  @apply text-sm font-medium text-base-content/70;
 }
 
-.clear-all-btn {
-  background: none;
-  border: none;
-  color: var(--color-gold-500);
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: var(--radius-sm);
-  transition: all 0.2s ease;
-}
-
-.clear-all-btn:hover {
-  background: rgba(212, 175, 55, 0.1);
-}
-
-.filter-group {
-  margin-bottom: 1.5rem;
-}
-
-.filter-group label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: var(--color-text);
-  font-size: var(--font-size-sm);
-}
-
-.filter-group input,
-.filter-group select {
-  width: 100%;
-  padding: 0.75rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-base);
-  background: var(--color-background);
-  color: var(--color-text);
-  transition: border-color 0.2s ease;
-}
-
-.filter-group input:focus,
-.filter-group select:focus {
-  outline: none;
-  border-color: var(--color-gold-500);
-}
-
-.price-inputs {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.price-inputs input {
-  flex: 1;
-}
-
-.price-inputs span {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-sm);
-}
-
-.results {
-  min-height: 400px;
-}
-
-.map-view {
-  width: 100%;
-}
-
-.properties-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 2rem;
-}
-
-.loading-state,
-.error-state,
-.empty-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 4rem 2rem;
-  text-align: center;
-}
-
-.loading-state {
-  gap: 1rem;
-}
-
-.loading-state p {
-  color: var(--color-text-secondary);
-}
-
-.error-state {
-  color: var(--color-error);
-}
-
-.empty-state svg {
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-.empty-state h3 {
-  font-size: var(--font-size-2xl);
-  color: var(--color-text);
-  margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5rem;
-}
-
-@media (max-width: 1024px) {
-  .search-layout {
-    grid-template-columns: 1fr;
+/* Animations */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
   }
-  
-  .filters {
-    position: static;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 
+@keyframes backgroundShift {
+  0%, 100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(20px, 20px) scale(1.05);
+  }
+}
+
+/* Responsive */
 @media (max-width: 768px) {
-  .search-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
+  .hero-title {
+    @apply text-3xl;
   }
   
-  .view-toggle {
-    width: 100%;
-  }
-  
-  .toggle-btn {
-    flex: 1;
-    justify-content: center;
-  }
-  
-  .properties-grid {
-    grid-template-columns: 1fr;
-  }
-  /* Add padding when comparison bar is visible */
-  .search-page {
-    padding-bottom: 0;
-    transition: padding-bottom 0.3s ease;
-  }
-
-  .search-page.has-comparison {
-    padding-bottom: 120px;
+  .results-count {
+    @apply text-xl;
   }
 }
 </style>

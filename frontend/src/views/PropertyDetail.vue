@@ -1,594 +1,476 @@
-<template>
-  <div class="property-detail">
-    <!-- Loading State -->
-    <div v-if="propertiesStore.loading" class="loading-state container">
-      <div class="spinner"></div>
-      <p>Loading property details...</p>
-    </div>
-
-    <!-- Error State -->
-    <div v-else-if="propertiesStore.error" class="error-state container">
-      <p>{{ propertiesStore.error }}</p>
-      <button class="btn btn-primary" @click="router.push({ name: 'home' })">
-        Back to Home
-      </button>
-    </div>
-
-    <!-- Property Not Found -->
-    <div v-else-if="!property" class="error-state container">
-      <h2>Property not found</h2>
-      <button class="btn btn-primary" @click="router.push({ name: 'home' })">
-        Back to Home
-      </button>
-    </div>
-
-    <!-- Property Content -->
-    <div v-else>
-      <!-- Hero Image -->
-      <!-- Image Gallery -->
-    <section class="gallery" @click="openLightbox(0)">
-      <div class="main-image">
-        <img 
-          v-if="property.images && property.images.length > 0"
-          :src="property.images[0]" 
-          :alt="property.address"
-        />
-        <div v-else class="no-image">No Image Available</div>
-        
-        <!-- Gallery indicator if multiple images -->
-        <div v-if="allImages.length > 1" class="gallery-indicator">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect width="18" height="18" x="3" y="3" rx="2" ry="2"/>
-            <circle cx="9" cy="9" r="2"/>
-            <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-          </svg>
-          <span>{{ allImages.length }} photos</span>
-        </div>
-      </div>
-    </section>
-
-    <!-- Add Lightbox at the end of template, before closing div -->
-    <ImageLightbox 
-      v-if="property"
-      :images="allImages"
-      :initial-index="lightboxIndex"
-      :is-open="lightboxOpen"
-      @close="lightboxOpen = false"
-    />
-
-      <!-- Property Details -->
-      <section class="property-info container">
-        <div class="info-layout">
-          <!-- Main Content -->
-          <main class="main-content">
-            <!-- Price & Stats -->
-            <div class="price-stats-section">
-              <div class="price-block">
-                <span class="price-label">Price</span>
-                <span class="price-value">{{ formatPrice(property.price) }}</span>
-              </div>
-              
-              <div class="stats-grid">
-                <div class="stat-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V9Z"/>
-                    <path d="M3 9V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2"/>
-                  </svg>
-                  <div>
-                    <span class="stat-value">{{ property.beds || '-' }}</span>
-                    <span class="stat-label">Bedrooms</span>
-                  </div>
-                </div>
-                
-                <div class="stat-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1 0l-1 1a1.5 1.5 0 0 0 0 1L7 9"/>
-                    <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/>
-                  </svg>
-                  <div>
-                    <span class="stat-value">{{ property.baths || '-' }}</span>
-                    <span class="stat-label">Bathrooms</span>
-                  </div>
-                </div>
-                
-                <div class="stat-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15V6"/>
-                    <path d="M18.5 18a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z"/>
-                    <path d="M12 12H3"/>
-                    <path d="M16 6H3"/>
-                    <path d="M12 18H3"/>
-                  </svg>
-                  <div>
-                    <span class="stat-value">{{ property.sqft?.toLocaleString() || '-' }}</span>
-                    <span class="stat-label">Sq Ft</span>
-                  </div>
-                </div>
-                
-                <div class="stat-item">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect width="18" height="18" x="3" y="3" rx="2"/>
-                    <path d="M3 9h18"/>
-                    <path d="M9 21V9"/>
-                  </svg>
-                  <div>
-                    <span class="stat-value">{{ property.yearBuilt || '-' }}</span>
-                    <span class="stat-label">Year Built</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Description -->
-            <div class="section-block">
-              <h2 class="section-title">About This Property</h2>
-              <p class="property-description">{{ property.description }}</p>
-            </div>
-
-            <!-- Features -->
-            <div v-if="property.features && property.features.length > 0" class="section-block">
-              <h2 class="section-title">Features</h2>
-              <div class="features-grid">
-                <div 
-                  v-for="(feature, idx) in property.features" 
-                  :key="idx"
-                  class="feature-item"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M20 6 9 17l-5-5"/>
-                  </svg>
-                  {{ feature }}
-                </div>
-              </div>
-            </div>
-
-            <!-- Price History Chart -->
-            <div v-if="property.history && property.history.length > 1" class="section-block">
-              <h2 class="section-title">Price History</h2>
-              <PriceHistoryChart :history="property.history" />
-              <p class="chart-note">
-                Historical valuations based on listing data
-              </p>
-            </div>
-
-            <!-- Additional Details -->
-            <div class="section-block">
-              <h2 class="section-title">Property Details</h2>
-              <div class="details-grid">
-                <div class="detail-row">
-                  <span class="detail-label">Property Type:</span>
-                  <span class="detail-value">{{ property.type }}</span>
-                </div>
-                <div class="detail-row">
-                  <span class="detail-label">Status:</span>
-                  <span class="detail-value">{{ property.status || 'N/A' }}</span>
-                </div>
-                <div v-if="property.lotSqft" class="detail-row">
-                  <span class="detail-label">Lot Size:</span>
-                  <span class="detail-value">{{ property.lotSqft.toLocaleString() }} sq ft</span>
-                </div>
-                <div v-if="property.hoaFee" class="detail-row">
-                  <span class="detail-label">HOA Fee:</span>
-                  <span class="detail-value">${{ property.hoaFee }}/month</span>
-                </div>
-                <div v-if="property.agentName" class="detail-row">
-                  <span class="detail-label">Agent:</span>
-                  <span class="detail-value">{{ property.agentName }}</span>
-                </div>
-                <div v-if="property.officeName" class="detail-row">
-                  <span class="detail-label">Office:</span>
-                  <span class="detail-value">{{ property.officeName }}</span>
-                </div>
-              </div>
-            </div>
-          </main>
-
-          <!-- Sidebar -->
-          <aside class="sidebar">
-            <div class="contact-card">
-              <h3>Interested in this property?</h3>
-              <p class="contact-description">Contact us to schedule a viewing or get more information.</p>
-              <button class="btn btn-primary full-width">Schedule Tour</button>
-              <button class="btn btn-secondary full-width">Contact Agent</button>
-              
-              <a 
-                v-if="property.propertyUrl"
-                :href="property.propertyUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="external-link"
-              >
-                View on Realtor.com
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
-                  <path d="M15 3h6v6"/>
-                  <path d="M10 14 21 3"/>
-                </svg>
-              </a>
-            </div>
-          </aside>
-        </div>
-      </section>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usePropertiesStore } from '@/stores/properties'
-import { formatPrice } from '@/utils/propertyHelpers'
+import { useComparisonStore } from '@/stores/comparison'
+import ImageGallery from '@/components/property/ImageGallery.vue'
+import PropertyDetails from '@/components/property/PropertyDetails.vue'
+import SimilarProperties from '@/components/property/SimilarProperties.vue'
+import ContactForm from '@/components/property/ContactForm.vue'
+import MapView from '@/components/property/MapView.vue'
 import PriceHistoryChart from '@/components/property/PriceHistoryChart.vue'
-import ImageLightbox from '@/components/common/ImageLightbox.vue'
 
 const route = useRoute()
 const router = useRouter()
 const propertiesStore = usePropertiesStore()
+const comparisonStore = useComparisonStore()
 
-const property = computed(() => propertiesStore.selectedProperty)
+const propertyId = computed(() => route.params.id as string)
+const property = computed(() => propertiesStore.currentProperty)
+const loading = ref(true)
+const error = ref<string | null>(null)
 
-// Lightbox state
-const lightboxOpen = ref(false)
-const lightboxIndex = ref(0)
-
-const allImages = computed(() => {
-  if (!property.value) return []
-  const images = [property.value.image]
-  if (property.value.altPhotos && property.value.altPhotos.length > 0) {
-    images.push(...property.value.altPhotos)
+// Fetch property data
+onMounted(async () => {
+  try {
+    loading.value = true
+    error.value = null
+    
+    await propertiesStore.fetchPropertyById(propertyId.value)
+    
+    if (!propertiesStore.currentProperty) {
+      error.value = 'Property not found'
+    }
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load property'
+  } finally {
+    loading.value = false
   }
+})
+
+// Format helpers
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0
+  }).format(price)
+}
+
+const formatNumber = (num: number) => {
+  return new Intl.NumberFormat('en-US').format(num)
+}
+
+// Images for gallery
+const propertyImages = computed(() => {
+  if (!property.value) return []
+  
+  const images: string[] = []
+  
+  if (property.value.primary_photo) {
+    images.push(property.value.primary_photo)
+  }
+  
+  if (property.value.photos && property.value.photos.length > 0) {
+    images.push(...property.value.photos.filter(p => p !== property.value.primary_photo))
+  }
+  
+  // If no images, return placeholder
+  if (images.length === 0) {
+    images.push('https://via.placeholder.com/1200x800?text=No+Image+Available')
+  }
+  
   return images
 })
 
-const openLightbox = (index: number) => {
-  lightboxIndex.value = index
-  lightboxOpen.value = true
+// Comparison actions
+const isInComparison = computed(() => {
+  if (!property.value) return false
+  return comparisonStore.properties.some(p => p.property_id === property.value!.property_id)
+})
+
+function toggleComparison() {
+  if (!property.value) return
+  
+  if (isInComparison.value) {
+    comparisonStore.removeProperty(property.value.property_id)
+  } else {
+    comparisonStore.addProperty(property.value)
+  }
 }
 
-onMounted(() => {
-  const propertyId = route.params.id as string
-  propertiesStore.fetchPropertyById(propertyId)
-})
+// Contact form handler
+function handleContactSubmit(data: any) {
+  console.log('Contact form submitted:', data)
+  // In production, this would send to your backend API
+}
+
+// Favorite action (placeholder)
+const isFavorite = ref(false)
+
+function toggleFavorite() {
+  isFavorite.value = !isFavorite.value
+  // In production, this would call your favorites API
+}
+
+// Share action
+function shareProperty() {
+  if (navigator.share) {
+    navigator.share({
+      title: property.value?.full_street_line || 'Property',
+      text: `Check out this property: ${property.value?.full_street_line}`,
+      url: window.location.href
+    })
+  } else {
+    // Fallback: copy to clipboard
+    navigator.clipboard.writeText(window.location.href)
+    alert('Link copied to clipboard!')
+  }
+}
+
+// Back navigation
+function goBack() {
+  if (window.history.length > 1) {
+    router.back()
+  } else {
+    router.push('/search')
+  }
+}
 </script>
 
+<template>
+  <div class="property-detail-page">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-container">
+      <div class="loading loading-spinner loading-lg text-primary"></div>
+      <p class="loading-text">Loading property details...</p>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="error || !property" class="error-container">
+      <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <h2 class="error-title">Property Not Found</h2>
+      <p class="error-message">{{ error || 'The property you\'re looking for doesn\'t exist.' }}</p>
+      <button class="btn btn-primary mt-4" @click="$router.push('/search')">
+        Back to Search
+      </button>
+    </div>
+
+    <!-- Property Content -->
+    <div v-else class="property-content">
+      <!-- Back Button -->
+      <div class="container mx-auto px-4 pt-6">
+        <button class="back-btn" @click="goBack">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back to Results
+        </button>
+      </div>
+
+      <!-- Property Header -->
+      <div class="property-header">
+        <div class="container mx-auto px-4 py-6">
+          <div class="header-content">
+            <div class="header-main">
+              <h1 class="property-title">{{ property.full_street_line }}</h1>
+              <p class="property-location">
+                {{ property.city }}, {{ property.state }} {{ property.zip_code }}
+              </p>
+            </div>
+            
+            <div class="header-actions">
+              <button
+                class="action-btn"
+                :class="{ 'action-btn-active': isFavorite }"
+                @click="toggleFavorite"
+              >
+                <svg class="w-6 h-6" :fill="isFavorite ? 'currentColor' : 'none'" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+                </svg>
+                <span class="action-label">Save</span>
+              </button>
+
+              <button class="action-btn" @click="shareProperty">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                <span class="action-label">Share</span>
+              </button>
+
+              <button
+                class="action-btn"
+                :class="{ 'action-btn-active': isInComparison }"
+                @click="toggleComparison"
+              >
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+                </svg>
+                <span class="action-label">Compare</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Price and Quick Stats -->
+          <div class="quick-stats">
+            <div class="price-section">
+              <p class="price-label">List Price</p>
+              <h2 class="price-value">{{ formatPrice(property.list_price) }}</h2>
+              <p v-if="property.price_per_sqft" class="price-per-sqft">
+                {{ formatPrice(property.price_per_sqft) }} per sq ft
+              </p>
+            </div>
+
+            <div class="stats-grid">
+              <div class="stat-item">
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a2 2 0 001 1h3m10-11l2 2m-2-2v10a2 2 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span class="stat-value">{{ property.beds }}</span>
+                <span class="stat-label">Beds</span>
+              </div>
+
+              <div class="stat-item">
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                <span class="stat-value">{{ property.full_baths }}</span>
+                <span class="stat-label">Baths</span>
+              </div>
+
+              <div v-if="property.sqft" class="stat-item">
+                <svg class="stat-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
+                </svg>
+                <span class="stat-value">{{ formatNumber(property.sqft) }}</span>
+                <span class="stat-label">Sq Ft</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Content Grid -->
+      <div class="container mx-auto px-4 py-8">
+        <div class="content-grid">
+          <!-- Left Column -->
+          <div class="left-column">
+            <!-- Image Gallery -->
+            <ImageGallery
+              :images="propertyImages"
+              :property-title="property.full_street_line"
+            />
+
+            <!-- Property Details -->
+            <PropertyDetails :property="property" />
+
+            <!-- Map (if MapView component exists) -->
+            <div v-if="property.latitude && property.longitude" class="map-section">
+              <h2 class="section-title">Location</h2>
+              <MapView
+                :latitude="property.latitude"
+                :longitude="property.longitude"
+                :address="property.full_street_line"
+              />
+            </div>
+
+            <!-- Price History Chart (if available) -->
+            <div v-if="property.last_sold_price" class="chart-section">
+              <h2 class="section-title">Price History</h2>
+              <PriceHistoryChart
+                :current-price="property.list_price"
+                :last-sold-price="property.last_sold_price"
+                :last-sold-date="property.last_sold_date"
+              />
+            </div>
+          </div>
+
+          <!-- Right Column - Contact Form -->
+          <div class="right-column">
+            <ContactForm
+              :property="property"
+              @submit="handleContactSubmit"
+            />
+          </div>
+        </div>
+
+        <!-- Similar Properties -->
+        <div class="similar-section">
+          <SimilarProperties
+            :current-property="property"
+            :all-properties="propertiesStore.properties"
+            :max-results="6"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
 <style scoped>
-.property-hero {
-  position: relative;
-  height: 60vh;
-  min-height: 400px;
-  overflow: hidden;
+.property-detail-page {
+  @apply min-h-screen bg-base-200;
 }
 
-.hero-image {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+/* Loading & Error States */
+.loading-container,
+.error-container {
+  @apply flex flex-col items-center justify-center min-h-screen;
+  @apply py-20 px-4;
 }
 
-.hero-overlay {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.8) 0%, rgba(0, 0, 0, 0.4) 50%, transparent 100%);
+.loading-text {
+  @apply text-base-content/60 mt-4;
 }
 
-.hero-content {
-  position: absolute;
-  bottom: 2rem;
-  left: 0;
-  right: 0;
-  color: white;
-  z-index: 10;
+.error-icon {
+  @apply w-20 h-20 text-error mb-4;
 }
 
-.property-badges {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+.error-title {
+  @apply text-3xl font-bold text-base-content mb-2;
 }
 
-.badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: var(--radius-sm);
-  font-size: var(--font-size-xs);
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
+.error-message {
+  @apply text-base-content/60 text-center max-w-md;
 }
 
-.badge-type {
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--color-gold-600);
+/* Back Button */
+.back-btn {
+  @apply flex items-center gap-2;
+  @apply text-base-content/70 hover:text-primary;
+  @apply font-medium transition-colors;
 }
 
-.badge-active {
-  background: var(--color-success);
-  color: white;
+/* Property Header */
+.property-header {
+  @apply bg-white border-b border-base-200;
+  @apply shadow-sm;
 }
 
-.badge-pending {
-  background: var(--color-warning);
-  color: white;
+.header-content {
+  @apply flex flex-col md:flex-row justify-between items-start md:items-center gap-4;
+}
+
+.header-main {
+  @apply flex-1;
 }
 
 .property-title {
-  font-family: var(--font-family-display);
-  font-size: clamp(2rem, 5vw, 3.5rem);
-  font-weight: 700;
-  margin-bottom: 0.5rem;
-  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  @apply text-3xl md:text-4xl font-bold text-base-content mb-2;
+  font-feature-settings: 'ss01', 'ss02';
 }
 
 .property-location {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: var(--font-size-lg);
+  @apply text-lg text-base-content/60;
 }
 
-.property-location svg {
-  color: var(--color-gold-400);
+/* Header Actions */
+.header-actions {
+  @apply flex gap-2;
 }
 
-.property-info {
-  padding: 3rem 0;
+.action-btn {
+  @apply flex flex-col items-center gap-1;
+  @apply px-4 py-3 rounded-lg;
+  @apply bg-base-100 hover:bg-base-200;
+  @apply border border-base-300;
+  @apply transition-all duration-300;
 }
 
-.info-layout {
-  display: grid;
-  grid-template-columns: 1fr 350px;
-  gap: 3rem;
+.action-btn-active {
+  @apply bg-primary text-white border-primary;
 }
 
-.price-stats-section {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  margin-bottom: 2rem;
+.action-label {
+  @apply text-xs font-medium;
 }
 
-.price-block {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 2rem;
-  padding-bottom: 2rem;
-  border-bottom: 1px solid var(--color-border);
+/* Quick Stats */
+.quick-stats {
+  @apply flex flex-col md:flex-row gap-6 mt-6 pt-6 border-t border-base-200;
+}
+
+.price-section {
+  @apply flex-1;
 }
 
 .price-label {
-  font-size: var(--font-size-sm);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 0.5rem;
+  @apply text-sm text-base-content/60 mb-1;
 }
 
 .price-value {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-4xl);
-  font-weight: 700;
-  color: var(--color-gold-500);
+  @apply text-4xl font-bold text-primary;
+  font-feature-settings: 'ss01', 'ss02';
+}
+
+.price-per-sqft {
+  @apply text-sm text-base-content/60 mt-1;
 }
 
 .stats-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 1.5rem;
+  @apply flex gap-8;
 }
 
 .stat-item {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  @apply flex flex-col items-center;
 }
 
-.stat-item svg {
-  color: var(--color-gold-500);
-  flex-shrink: 0;
+.stat-icon {
+  @apply w-8 h-8 text-base-content/40 mb-2;
 }
 
 .stat-value {
-  display: block;
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-text);
+  @apply text-2xl font-bold text-base-content;
 }
 
 .stat-label {
-  display: block;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  @apply text-sm text-base-content/60;
 }
 
-.section-block {
-  margin-bottom: 3rem;
+/* Content Grid */
+.content-grid {
+  @apply grid grid-cols-1 lg:grid-cols-3 gap-8;
+}
+
+.left-column {
+  @apply lg:col-span-2 space-y-8;
+}
+
+.right-column {
+  @apply lg:col-span-1;
+}
+
+.map-section,
+.chart-section {
+  @apply bg-white rounded-xl p-6 shadow-sm;
+  border: 1px solid hsl(var(--b2));
 }
 
 .section-title {
-  font-family: var(--font-family-display);
-  font-size: var(--font-size-2xl);
-  font-weight: 700;
-  color: var(--color-gold-500);
-  margin-bottom: 1.5rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  font-size: var(--font-size-lg);
+  @apply text-2xl font-bold text-base-content mb-6;
+  font-feature-settings: 'ss01', 'ss02';
 }
 
-.property-description {
-  font-size: var(--font-size-lg);
-  line-height: 1.8;
-  color: var(--color-text-secondary);
+.similar-section {
+  @apply mt-12;
 }
 
-.features-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 1rem;
-}
-
-.feature-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  font-size: var(--font-size-sm);
-}
-
-.feature-item svg {
-  color: var(--color-gold-500);
-  flex-shrink: 0;
-}
-
-.details-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 1rem;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-}
-
-.detail-label {
-  color: var(--color-text-secondary);
-  font-weight: 500;
-}
-
-.detail-value {
-  color: var(--color-text);
-  font-weight: 600;
-}
-
-.sidebar {
-  position: sticky;
-  top: 2rem;
-  height: fit-content;
-}
-
-.contact-card {
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-  padding: 2rem;
-  box-shadow: var(--shadow-lg);
-}
-
-.contact-card h3 {
-  font-size: var(--font-size-xl);
-  margin-bottom: 1rem;
-  color: var(--color-text);
-}
-
-.contact-description {
-  color: var(--color-text-secondary);
-  margin-bottom: 1.5rem;
-  line-height: 1.6;
-}
-
-.full-width {
-  width: 100%;
-  margin-bottom: 0.75rem;
-}
-
-.external-link {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  color: var(--color-text-secondary);
-  text-decoration: none;
-  font-size: var(--font-size-sm);
-  border-top: 1px solid var(--color-border);
-  margin-top: 1rem;
-  padding-top: 1.5rem;
-  transition: color 0.3s ease;
-}
-
-.external-link:hover {
-  color: var(--color-gold-500);
-}
-
-.loading-state,
-.error-state {
-  text-align: center;
-  padding: 4rem 2rem;
-}
-
-.loading-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1rem;
-}
-
-.error-state h2 {
-  font-size: var(--font-size-2xl);
-  margin-bottom: 1rem;
-  color: var(--color-text);
+/* Responsive */
+@media (max-width: 1024px) {
+  .content-grid {
+    @apply grid-cols-1;
+  }
+  
+  .right-column {
+    @apply order-first lg:order-last;
+  }
 }
 
 @media (max-width: 768px) {
-  .info-layout {
-    grid-template-columns: 1fr;
-  }
-  
-  .sidebar {
-    position: static;
+  .property-title {
+    @apply text-2xl;
   }
   
   .stats-grid {
-    grid-template-columns: 1fr;
+    @apply gap-4;
   }
-  .chart-note {
-  margin-top: 1rem;
-  font-size: var(--font-size-xs);
-  color: var(--color-text-secondary);
-  font-style: italic;
-  text-align: right;
+  
+  .header-actions {
+    @apply w-full justify-between;
   }
-  .gallery {
-  cursor: pointer;
-  position: relative;
-}
-
-.gallery-indicator {
-  position: absolute;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  background: rgba(0, 0, 0, 0.7);
-  backdrop-filter: blur(10px);
-  color: #fff;
-  padding: 0.5rem 1rem;
-  border-radius: 2rem;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  transition: all 0.3s ease;
-}
-
-.gallery:hover .gallery-indicator {
-  background: rgba(212, 175, 55, 0.9);
-  transform: scale(1.05);
-}
-
-.gallery-indicator svg {
-  width: 18px;
-  height: 18px;
-}
 }
 </style>
