@@ -14,13 +14,34 @@ load_dotenv()
 from app.db.database import engine, Base
 from app.models.property import Property
 from app.models.inquiry import Inquiry
+from app.models.user import User
+from app.models.agent import Agent
+from app.models.crm import (
+    CustomerInteraction,
+    CustomerNote,
+    CustomerTask,
+    CustomerPipeline,
+    FeatureSettings,
+    ActivityLog
+)
 
 def create_tables():
     """Create all database tables"""
     print("Creating database tables...")
 
     # Import all models to ensure they're registered with Base
-    from app.models import Property, Inquiry
+    from app.models import (
+        Property,
+        Inquiry,
+        User,
+        Agent,
+        CustomerInteraction,
+        CustomerNote,
+        CustomerTask,
+        CustomerPipeline,
+        FeatureSettings,
+        ActivityLog
+    )
 
     # Create all tables
     Base.metadata.create_all(bind=engine)
